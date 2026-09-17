@@ -1,0 +1,2074 @@
+# MineChess
+
+## 1. 项目目标
+
+开发：
+
+```text
+Minecraft Java 26.2
+Paper 26.2
+MineChess
+```
+
+V1 专注 **双人国际象棋**。
+
+核心体验：
+
+```text
+玩家 A              玩家 B
+   ↓                   ↓
+
+        3D 国际象棋桌
+     ┌───────────────┐
+     │ ♜ ♞ ♝ ♛ ♚ ♝...│
+     │               │
+     │    8 × 8      │
+     │               │
+     │ ♙ ♙ ♙ ♙ ♙ ♙...│
+     └───────────────┘
+
+点击棋子
+↓
+显示合法落点
+↓
+点击格子
+↓
+棋子动画移动
+```
+
+并提供：
+
+* 完整国际象棋规则
+* 双人挑战 / 接受
+* 棋钟
+* 将军 / 将死 / 和棋
+* 王车易位
+* 吃过路兵
+* 兵升变
+* 认输
+* 提议和棋
+* 断线重连
+* 棋谱
+* MineUI 辅助界面
+* 高质量 3D 棋子与棋盘
+
+---
+
+# 2. 推荐总体架构
+
+```text
+                 MineChess
+                    │
+        ┌───────────┴───────────┐
+        │                       │
+     Game Core              Presentation
+        │                       │
+        │              ┌────────┴────────┐
+        │              │                 │
+    Chesslib       World Renderer     MineUI
+        │              │                 │
+   Chess rules       3D棋盘            棋钟
+   legal moves       棋子              升变
+   check/mate        动画              和棋
+   FEN/PGN           点击              菜单
+```
+
+最重要的原则：
+
+```text
+ChessGame
+```
+
+绝不能依赖：
+
+```text
+ItemDisplay
+Interaction
+MineUI
+Bukkit GUI
+```
+
+规则层与显示层完全分离。
+
+---
+
+# 3. 国际象棋规则不要自己从零实现
+
+推荐直接引入：
+
+```text
+bhlangonijr/chesslib
+```
+
+这是一个轻量 Java 国际象棋库，支持：
+
+* legal move generation
+* move validation
+* check
+* checkmate
+* stalemate
+* castling
+* en passant
+* promotion
+* repetition
+* 50-move rule
+* insufficient material
+* FEN
+* PGN
+* SAN / UCI
+
+而且是 Apache-2.0。
+
+因此 MineChess 不应该自己写：
+
+```java
+if (piece == KNIGHT) {
+    ...
+}
+```
+
+这种国际象棋规则。
+
+做一个：
+
+```java
+ChessRulesEngine
+```
+
+包装 chesslib 即可。
+
+---
+
+# 4. Game Core
+
+核心对象：
+
+```java
+ChessMatch
+```
+
+包含：
+
+```java
+UUID id;
+
+UUID whitePlayer;
+UUID blackPlayer;
+
+Board board;
+
+ChessMatchState state;
+
+ChessClock whiteClock;
+ChessClock blackClock;
+
+List<MoveRecord> moves;
+
+DrawOffer drawOffer;
+
+GameResult result;
+```
+
+状态：
+
+```text
+WAITING
+STARTING
+PLAYING
+PROMOTION_PENDING
+FINISHED
+```
+
+---
+
+# 5. Move 数据
+
+服务端内部统一使用：
+
+```text
+UCI
+```
+
+例如：
+
+```text
+e2e4
+g1f3
+e7e8q
+```
+
+展示给玩家使用：
+
+```text
+SAN
+```
+
+例如：
+
+```text
+e4
+Nf3
+O-O
+Qxd5+
+Qh7#
+```
+
+最后可以自然导出：
+
+```text
+PGN
+```
+
+---
+
+# 6. 规则
+
+必须支持：
+
+```text
+普通移动
+吃子
+
+将军
+将死
+逼和
+
+王车易位
+吃过路兵
+兵升变
+
+和棋请求
+认输
+```
+
+和棋进一步支持：
+
+```text
+三次重复 → 可申请
+50 回合规则 → 可申请
+
+五次重复 → 自动和棋
+75 回合规则 → 自动和棋
+
+死局 / 子力不足 → 自动和棋
+```
+
+这与 FIDE 当前规则一致：三次重复和 50 回合属于 claim，五次重复和 75 回合属于自动和棋。
+
+---
+
+# 7. 最重要的世界交互设计
+
+推荐使用：
+
+```text
+1 × Chess Board ItemDisplay
+32 × Piece ItemDisplay
+64 × Interaction
+```
+
+最大：
+
+```text
+≈ 97 entities
+```
+
+而不是：
+
+```text
+64 BlockDisplay
++
+64 Interaction
++
+32 pieces
+```
+
+那样会接近 160 个实体。
+
+---
+
+# 8. 棋盘
+
+资源包制作：
+
+```text
+minechess:board
+```
+
+一个完整 8×8 棋盘模型。
+
+ItemDisplay：
+
+```text
+ChessBoardDisplay
+```
+
+尺寸建议：
+
+```text
+每格 0.65 ~ 0.8 block
+
+棋盘总边长约：
+5.2 ~ 6.4 block
+```
+
+我倾向：
+
+```text
+0.7 block / square
+```
+
+则：
+
+```text
+5.6 × 5.6 block
+```
+
+整体不会太大。
+
+---
+
+# 9. 棋子
+
+资源包提供 12 个模型：
+
+```text
+white_king
+white_queen
+white_rook
+white_bishop
+white_knight
+white_pawn
+
+black_king
+black_queen
+black_rook
+black_bishop
+black_knight
+black_pawn
+```
+
+全部用：
+
+```text
+ItemDisplay
+```
+
+显示。
+
+推荐真正制作简洁的低多边形 3D Chess Piece。
+
+不要直接用：
+
+```text
+Minecraft 玩家头
+原版物品
+```
+
+会比较廉价。
+
+---
+
+# 10. PackHost
+
+你 MineUNO 已经有 PackHost：
+
+```text
+plugins/PackHost/packs/
+```
+
+能把多个资源包自动合并并下发。
+
+所以直接：
+
+```text
+packs/
+├ mineuno.zip
+└ minechess.zip
+```
+
+即可。
+
+长期建议把：
+
+```text
+PackHost
+```
+
+从 MineUNO 仓库独立出来，成为：
+
+```text
+jurky123/PackHost
+```
+
+因为现在：
+
+```text
+MineUNO
+MineChess
+MineUI
+MineSkin
+```
+
+都会逐渐用到资源分发。
+
+---
+
+# 11. 棋盘坐标系统
+
+不要在 Renderer 里到处写：
+
+```java
+x + 0.7 * file
+```
+
+抽一个：
+
+```java
+BoardTransform
+```
+
+例如：
+
+```java
+Location squareCenter(
+    ChessSquare square
+);
+```
+
+内部：
+
+```text
+origin
++
+fileVector × file
++
+rankVector × rank
+```
+
+因此 Arena 可以任意：
+
+```text
+yaw
+位置
+方向
+```
+
+棋盘都正常。
+
+---
+
+# 12. 玩家位置
+
+白方：
+
+```text
+靠近 rank 1
+```
+
+黑方：
+
+```text
+靠近 rank 8
+```
+
+例如：
+
+```text
+            BLACK
+              ↓
+
+8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+6
+5
+4
+3
+2   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+
+    a b c d e f g h
+
+              ↑
+            WHITE
+```
+
+玩家进入游戏后：
+
+```text
+传送到各自座位
+锁定一定移动范围
+允许自由转头
+```
+
+这部分可以复用 MineUNO 的座位思路。
+
+---
+
+# 13. 64 个 Interaction
+
+每个格子上：
+
+```text
+Interaction Entity
+```
+
+例如：
+
+```text
+interaction UUID
+    ↓
+E4
+```
+
+注册：
+
+```java
+Map<UUID, ChessSquare>
+```
+
+点击 Interaction：
+
+```text
+ChessInteractionRegistry
+      ↓
+ChessMatch.handleSquareClick(
+    player,
+    E4
+);
+```
+
+---
+
+# 14. 点击逻辑
+
+这是整个 MineChess 的核心交互。
+
+第一次点击：
+
+```text
+E2
+```
+
+如果：
+
+```text
+是自己的棋子
++
+轮到自己
+```
+
+则：
+
+```text
+selected = E2
+```
+
+查询：
+
+```text
+legalMoves(E2)
+```
+
+假设：
+
+```text
+E3
+E4
+```
+
+棋盘显示：
+
+```text
+E2 = Selected
+
+E3 = Legal
+E4 = Legal
+```
+
+---
+
+第二次点击。
+
+如果：
+
+```text
+E4
+```
+
+合法：
+
+```text
+E2 → E4
+```
+
+执行移动。
+
+如果点：
+
+```text
+自己的另一枚棋子
+```
+
+则改为选择它。
+
+如果点击非法空格：
+
+```text
+取消选择
+```
+
+或播放：
+
+```text
+低沉 click
+```
+
+---
+
+# 15. Server Authoritative
+
+客户端和显示层绝不能自行决定：
+
+```text
+这个棋子能不能走
+```
+
+流程必须：
+
+```text
+click E2
+    ↓
+server
+    ↓
+ChessRulesEngine
+    ↓
+legal:
+E3 E4
+```
+
+再渲染。
+
+第二次：
+
+```text
+click E4
+    ↓
+server validate again
+    ↓
+doMove
+```
+
+必须验证两次。
+
+---
+
+# 16. 合法落点视觉
+
+选择棋子：
+
+```text
+格子边缘金色
+```
+
+合法空格：
+
+```text
+格子中央绿色小圆点
+```
+
+可以吃子：
+
+```text
+目标棋子周围绿色圆环
+```
+
+上一手：
+
+```text
+source + destination
+```
+
+淡黄色。
+
+将军：
+
+```text
+King square
+```
+
+红色。
+
+因此 overlay 类型：
+
+```java
+SELECTED
+LEGAL_MOVE
+LEGAL_CAPTURE
+LAST_MOVE
+CHECK
+```
+
+---
+
+# 17. 不需要 64 个 Overlay Entity
+
+只在需要的时候生成。
+
+最大合法移动数通常很少。
+
+例如 Queen：
+
+```text
+最多约 27
+```
+
+所以：
+
+```text
+selectedOverlay      1
+legalOverlays       <=27
+lastMoveOverlays      2
+checkOverlay          1
+```
+
+很轻。
+
+---
+
+# 18. 落子动画
+
+普通棋子：
+
+```text
+SOURCE
+  ↓
+smooth translation
+  ↓
+DESTINATION
+```
+
+约：
+
+```text
+200~300 ms
+```
+
+使用 Display interpolation。
+
+---
+
+# 19. 马
+
+马走日字如果直线移动会很奇怪。
+
+做：
+
+```text
+start
+ ↓
+midpoint + Y 0.4
+ ↓
+destination
+```
+
+形成一个小跳跃。
+
+---
+
+# 20. 吃子
+
+目标棋子：
+
+```text
+scale
+1.0
+ ↓
+0.0
+```
+
+约：
+
+```text
+150ms
+```
+
+同时攻击棋子移入。
+
+不要直接瞬间 remove。
+
+---
+
+# 21. 王车易位
+
+同时动画：
+
+```text
+King
++
+Rook
+```
+
+例如：
+
+```text
+e1 → g1
+h1 → f1
+```
+
+---
+
+# 22. 吃过路兵
+
+例如：
+
+```text
+e5 × d6
+```
+
+动画：
+
+```text
+e5 → d6
+```
+
+同时：
+
+```text
+d5 pawn
+↓
+shrink
+↓
+remove
+```
+
+---
+
+# 23. 升变
+
+兵到：
+
+```text
+8th rank
+```
+
+后不要马上默认 Queen。
+
+进入：
+
+```text
+PROMOTION_PENDING
+```
+
+MineUI：
+
+```text
+┌──────────────────────┐
+│       选择升变       │
+│                      │
+│ ♕    ♖    ♗    ♘    │
+│                      │
+└──────────────────────┘
+```
+
+选择：
+
+```text
+Queen
+Rook
+Bishop
+Knight
+```
+
+无 MineUI：
+
+使用 Paper Dialog。
+
+超时：
+
+```text
+默认 Queen
+```
+
+---
+
+# 24. MineUI 的定位
+
+我不建议 MineChess V1 把主要棋盘放在 MineUI Screen。
+
+因为：
+
+```text
+你已经有 Minecraft 世界
++
+ItemDisplay
++
+Interaction
+```
+
+做真正棋桌会有趣得多。
+
+MineUI 负责：
+
+```text
+棋钟
+玩家信息
+
+Move History
+
+认输
+和棋
+离开
+
+升变 Modal
+
+赛后界面
+```
+
+---
+
+# 25. MineUI Panel
+
+例如：
+
+```text
+┌─────────────────────────┐
+│        MineChess        │
+│                         │
+│ Alice        08:32      │
+│                         │
+│          vs             │
+│                         │
+│ Bob          09:14      │
+│                         │
+│ e4  e5                  │
+│ Nf3 Nc6                 │
+│ Bb5 a6                  │
+│                         │
+│ [提议和棋] [认输]       │
+└─────────────────────────┘
+```
+
+直接复用你已有：
+
+```java
+MineUiProvider
+MineUiSession
+```
+
+即可。现有 MineSkin 已经证明这个集成模式能工作。
+
+---
+
+# 26. MineUI 后续还能加入纯 UI 模式
+
+未来可以：
+
+```text
+/chess ui
+```
+
+直接打开一个 2D Chess Screen。
+
+这样玩家不用去 Arena：
+
+```text
+随时随地下棋
+```
+
+你的 MineUI 已经能：
+
+```text
+Box
+Grid
+ItemView
+click action
+动画
+```
+
+所以可以：
+
+```text
+8×8 Grid
++
+32 ItemViews
+```
+
+直接做出来。
+
+因此以后 MineChess 可以拥有：
+
+```text
+WORLD mode
+UI mode
+```
+
+同一个 ChessMatch。
+
+---
+
+# 27. 建议给 MineUI 增加一个小功能
+
+现在 MineUI action 本质上是：
+
+```java
+String actionId
+```
+
+点击后客户端发送这个字符串。
+
+国际象棋可以暂时：
+
+```text
+square:a1
+square:a2
+...
+square:h8
+```
+
+但以后：
+
+```text
+围棋 19×19
+```
+
+会有 361 个 action。
+
+建议以后给 MineUI 增加：
+
+```java
+onAny(action -> ...)
+```
+
+或者：
+
+```text
+action:
+{
+    id: "square",
+    value: "e4"
+}
+```
+
+即：
+
+```text
+action id + payload
+```
+
+这对：
+
+```text
+Chess
+Go
+Inventory
+Shop
+Skin
+```
+
+都会有价值。
+
+但这不是 MineChess V1 的阻塞项。
+
+---
+
+# 28. Chess Clock
+
+V1 推荐支持：
+
+```text
+CASUAL
+∞
+
+RAPID
+10+0
+15+10
+
+BLITZ
+5+0
+3+2
+```
+
+格式：
+
+```text
+initial + increment
+```
+
+例如：
+
+```text
+3+2
+```
+
+表示：
+
+```text
+3 minutes
++
+每步 +2 seconds
+```
+
+---
+
+# 29. Clock 实现
+
+不要：
+
+```text
+每 tick --1
+```
+
+否则 TPS 降低时棋钟也变慢。
+
+使用：
+
+```java
+System.nanoTime()
+```
+
+记录：
+
+```text
+turnStartedAt
+```
+
+真实剩余时间：
+
+```text
+remaining
+-
+(now - turnStartedAt)
+```
+
+显示层：
+
+```text
+每 5 ticks
+```
+
+更新即可。
+
+---
+
+# 30. 棋钟显示
+
+物理棋盘两边：
+
+```text
+TextDisplay
+```
+
+例如：
+
+```text
+Alice
+09:43
+
+Bob
+08:21
+```
+
+当前走棋一方：
+
+```text
+发亮
+```
+
+MineUI 同时显示。
+
+---
+
+# 31. Challenge 流程
+
+```text
+/chess challenge Bob
+```
+
+Bob：
+
+```text
+Alice 邀请你进行国际象棋对局
+
+模式：10+0
+
+[接受] [拒绝]
+```
+
+接受：
+
+```text
+寻找可用 Arena
+↓
+随机/指定颜色
+↓
+传送玩家
+↓
+spawn board
+↓
+START
+```
+
+---
+
+# 32. 命令
+
+推荐：
+
+```text
+/chess
+
+/chess challenge <player>
+/chess challenge <player> <time>
+
+/chess accept
+/chess decline
+
+/chess resign
+
+/chess draw
+/chess acceptdraw
+/chess declinedraw
+
+/chess claimdraw
+
+/chess leave
+
+/chess history
+/chess rematch
+```
+
+管理员：
+
+```text
+/chess arena create <name>
+
+/chess arena setcenter <name>
+/chess arena delete <name>
+
+/chess reload
+```
+
+---
+
+# 33. Arena
+
+数据：
+
+```yaml
+arenas:
+
+  chess_1:
+    world: world
+
+    center:
+      x: 100.5
+      y: 65
+      z: 80.5
+      yaw: 90
+```
+
+只保存：
+
+```text
+center
+orientation
+```
+
+其他全部计算。
+
+不要保存：
+
+```text
+64 个 Interaction UUID
+32 个棋子 UUID
+```
+
+Game 开始 spawn。
+
+结束 remove。
+
+---
+
+# 34. 断线
+
+玩家断线：
+
+```text
+RECONNECTING
+```
+
+默认保留：
+
+```text
+60 seconds
+```
+
+有棋钟模式：
+
+```text
+棋钟继续
+```
+
+这样无法通过拔线暂停自己的时间。
+
+无棋钟 casual：
+
+```text
+60 秒等待
+```
+
+之后判负。
+
+---
+
+# 35. 认输
+
+```text
+/chess resign
+```
+
+MineUI 弹：
+
+```text
+确认认输？
+
+[确认]
+[取消]
+```
+
+避免误触。
+
+---
+
+# 36. 和棋请求
+
+玩家：
+
+```text
+Offer Draw
+```
+
+对手：
+
+```text
+Alice 提议和棋
+
+[接受]
+[拒绝]
+```
+
+只能存在：
+
+```text
+一个 pending draw offer
+```
+
+下出下一步后：
+
+```text
+draw offer 自动失效
+```
+
+---
+
+# 37. 对局结束
+
+可能：
+
+```text
+CHECKMATE
+
+STALEMATE
+
+RESIGNATION
+
+TIMEOUT
+
+DRAW_AGREEMENT
+
+REPETITION
+
+FIFTY_MOVE
+
+SEVENTY_FIVE_MOVE
+
+INSUFFICIENT_MATERIAL
+
+DISCONNECT_FORFEIT
+```
+
+结果：
+
+```text
+WHITE_WIN
+BLACK_WIN
+DRAW
+```
+
+---
+
+# 38. Checkmate 效果
+
+将死时：
+
+```text
+King
+↓
+红色光效
+```
+
+中央：
+
+```text
+CHECKMATE
+```
+
+TextDisplay。
+
+获胜一侧棋子：
+
+```text
+短暂金色发光
+```
+
+不要做大量粒子爆炸。
+
+国际象棋整体视觉应该偏：
+
+```text
+克制
+高级
+安静
+```
+
+而不是 UNO 风格。
+
+---
+
+# 39. Move History
+
+保存：
+
+```text
+SAN
+```
+
+例如：
+
+```text
+1. e4 e5
+2. Nf3 Nc6
+3. Bb5 a6
+```
+
+赛后可以：
+
+```text
+/chess history
+```
+
+并导出 PGN。
+
+---
+
+# 40. 持久化
+
+第一版保存：
+
+```text
+games
+players
+results
+PGN
+```
+
+SQLite 足够。
+
+例如：
+
+```text
+game_id
+white_uuid
+black_uuid
+
+started_at
+ended_at
+
+result
+termination
+
+time_control
+
+pgn
+final_fen
+```
+
+---
+
+# 41. 游戏统计
+
+以后可以提供：
+
+```text
+games
+wins
+draws
+losses
+
+whiteWins
+blackWins
+
+checkmates
+resignWins
+
+averageMoves
+```
+
+ELO 可以 V2 再加。
+
+---
+
+# 42. 推荐代码结构
+
+```text
+mineChess/
+
+├── src/main/java/com/minechess/
+
+│   ├── MineChessPlugin.java
+│
+│   ├── chess/
+│   │   ├── ChessRulesEngine.java
+│   │   ├── ChessPosition.java
+│   │   ├── ChessMove.java
+│   │   ├── MoveRecord.java
+│   │   ├── ChessResult.java
+│   │   └── DrawPolicy.java
+│
+│   ├── match/
+│   │   ├── ChessMatch.java
+│   │   ├── MatchManager.java
+│   │   ├── ChallengeManager.java
+│   │   └── ChessClock.java
+│
+│   ├── arena/
+│   │   ├── ChessArena.java
+│   │   ├── ArenaManager.java
+│   │   └── BoardTransform.java
+│
+│   ├── view/
+│   │   ├── ChessBoardView.java
+│   │   ├── PieceView.java
+│   │   ├── OverlayView.java
+│   │   ├── ChessAnimation.java
+│   │   └── InteractionRegistry.java
+│
+│   ├── ui/
+│   │   ├── ChessMineUi.java
+│   │   ├── PromotionUi.java
+│   │   └── ResultUi.java
+│
+│   ├── command/
+│   │   └── ChessCommand.java
+│
+│   └── persistence/
+│       └── GameRepository.java
+│
+└── pack/
+    ├── models/
+    ├── textures/
+    └── build_pack.py
+```
+
+---
+
+# 43. 不要直接依赖 MineUNO
+
+虽然 MineUNO 已经实现了：
+
+```text
+ItemDisplay
+Interaction
+座位
+动画
+Arena
+```
+
+但不要：
+
+```java
+import com.mineuno.Table;
+```
+
+MineChess → MineUNO
+
+是不合理依赖。
+
+应该把 UNO 中真正通用的部分抽出来。
+
+例如：
+
+```text
+MineGameCore
+```
+
+或者：
+
+```text
+MinecraftCommon
+```
+
+---
+
+# 44. 建议抽取的公共组件
+
+从 MineUNO 中抽：
+
+```text
+ArenaTransform
+
+DisplayAnimation
+
+InteractionRegistry
+
+SeatController
+
+DisplayLifecycle
+
+ItemModelFactory
+```
+
+得到：
+
+```text
+minecraft-common/
+└ game/
+   ├ Arena
+   ├ Display
+   ├ Interaction
+   └ Animation
+```
+
+然后：
+
+```text
+MineUNO ──┐
+          ├── MinecraftCommon
+MineChess ┘
+```
+
+不要抽：
+
+```text
+UNO Rule
+Card
+Pile
+Hand
+```
+
+这些仍属于 UNO。
+
+---
+
+# 45. 为未来棋类保留的抽象
+
+不要现在就做：
+
+```text
+UniversalBoardGameEngine
+```
+
+这会过度设计。
+
+但下面三个对象可以稍微泛化：
+
+```java
+BoardCoordinate
+
+BoardTransform
+
+BoardInteractionRegistry
+```
+
+例如：
+
+```java
+record BoardCoordinate(
+    int x,
+    int y
+) {}
+```
+
+Chess：
+
+```text
+8 × 8 CELL
+```
+
+未来：
+
+```text
+中国象棋
+9 × 10 INTERSECTION
+
+围棋
+19 × 19 INTERSECTION
+```
+
+所以 Board Renderer 不应该假定：
+
+```text
+永远 8×8
+```
+
+---
+
+# 46. Chess 自己保持独立
+
+规则层：
+
+```text
+ChessRulesEngine
+```
+
+仍然完全 Chess-specific。
+
+以后中国象棋：
+
+```text
+XiangqiRulesEngine
+```
+
+围棋：
+
+```text
+GoRulesEngine
+```
+
+不要强行共享规则模型。
+
+真正共享：
+
+```text
+房间
+玩家
+Arena
+Renderer
+Interaction
+Clock
+Match lifecycle
+```
+
+即可。
+
+---
+
+# 47. 测试
+
+Chess Rules 不需要重复测试 chesslib 所有内部规则。
+
+但必须测试你的包装层：
+
+```text
+e2 → e4
+
+illegal move rejected
+
+cannot move opponent piece
+
+wrong player turn
+
+castling
+
+en passant
+
+promotion
+
+check
+
+checkmate
+
+stalemate
+
+draw offer
+
+threefold claim
+
+50 move claim
+
+clock timeout
+```
+
+以及：
+
+```text
+UI 点击
+→ square
+→ Move
+```
+
+坐标映射。
+
+---
+
+# 48. V1 实现顺序
+
+### Phase 1
+
+```text
+Chesslib
+ChessMatch
+Challenge
+合法移动
+胜负
+```
+
+先通过命令：
+
+```text
+/chess move e2e4
+```
+
+把完整棋局跑通。
+
+---
+
+### Phase 2
+
+```text
+Arena
+BoardTransform
+ChessBoard model
+32 PieceDisplays
+```
+
+把完整棋盘显示出来。
+
+---
+
+### Phase 3
+
+```text
+64 Interaction
+选棋子
+合法落点
+点击移动
+```
+
+达到真正可玩。
+
+---
+
+### Phase 4
+
+```text
+移动动画
+吃子动画
+王车易位
+升变动画
+将军
+将死
+```
+
+---
+
+### Phase 5
+
+接入：
+
+```text
+MineUI
+
+棋钟
+历史
+和棋
+认输
+升变 Modal
+```
+
+---
+
+### Phase 6
+
+```text
+断线
+SQLite
+PGN
+统计
+rematch
+```
+
+---
+
+# 49. V1 完成标准
+
+必须支持：
+
+```text
+✔ 2 人完整下棋
+
+✔ 所有国际象棋合法移动
+
+✔ 王车易位
+✔ 吃过路兵
+✔ 升变
+
+✔ 将军
+✔ 将死
+✔ 逼和
+
+✔ 和棋
+✔ 认输
+
+✔ 棋钟
+
+✔ 3D Chess Board
+✔ 3D Chess Pieces
+
+✔ 点击棋子
+✔ 合法落点提示
+✔ 点击目标格落子
+
+✔ 落子动画
+✔ 吃子动画
+
+✔ MineUI 控制面板
+
+✔ 断线重连
+
+✔ PGN 保存
+```
+
+---
+
+# 50. 最终体验
+
+Alice：
+
+```text
+/chess challenge Bob 10+0
+```
+
+Bob：
+
+```text
+Alice 邀请你进行国际象棋
+
+10+0
+
+[接受]
+```
+
+点击接受。
+
+两人传送到棋桌两侧。
+
+棋盘：
+
+```text
+♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+· · · · · · · ·
+· · · · · · · ·
+· · · · · · · ·
+· · · · · · · ·
+♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+```
+
+Alice 准星点击：
+
+```text
+e2 Pawn
+```
+
+Pawn 发亮。
+
+棋盘：
+
+```text
+e3 ●
+e4 ●
+```
+
+Alice 点击：
+
+```text
+e4
+```
+
+白兵从：
+
+```text
+e2
+```
+
+平滑移动到：
+
+```text
+e4
+```
+
+Alice：
+
+```text
+09:56
+```
+
+停止。
+
+Bob：
+
+```text
+10:00
+```
+
+开始计时。
+
+Bob 点击：
+
+```text
+e7
+→
+e5
+```
+
+之后：
+
+```text
+Nf3
+Nc6
+Bb5
+...
+```
+
+某一步：
+
+```text
+Qh7#
+```
+
+黑王格子变红。
+
+中央浮现：
+
+```text
+CHECKMATE
+```
+
+MineUI：
+
+```text
+Alice Wins
+
+1 - 0
+
+42 moves
+
+[再来一局]
+[查看棋谱]
+[离开]
+```
+
+这就是 MineChess V1 应该达到的最终体验。

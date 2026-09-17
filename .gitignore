@@ -1,0 +1,11 @@
+.gradle/
+build/
+run/
+out/
+pack/src/
+pack/out/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+*.bak
