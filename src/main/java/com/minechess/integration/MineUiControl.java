@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -894,10 +895,34 @@ public class MineUiControl implements ControlUi {
         }
     }
 
+    /**
+     * 丢弃已关闭会话的 per-player 索引：客户端 ESC/指令关界面时不会走 close 动作，
+     * 这里在刷新/对局更新时顺带回收，避免 closed session 引用长期残留。
+     */
+    private void forgetClosedSessions() {
+        if (sessions.isEmpty()) return;
+        Iterator<Map.Entry<UUID, MineUiSession>> iterator = sessions.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, MineUiSession> entry = iterator.next();
+            MineUiSession session = entry.getValue();
+            if (session != null && !session.closed()) continue;
+            UUID id = entry.getKey();
+            iterator.remove();
+            views.remove(id);
+            roomOrder.remove(id);
+            inviteOrder.remove(id);
+            liveOrder.remove(id);
+            roomSignatures.remove(id);
+            boardStateCache.remove(id);
+            boardTextureMode.remove(id);
+        }
+    }
+
     // ---------- 状态推送 ----------
 
     @Override
     public void refresh(Player player) {
+        forgetClosedSessions();
         MineUiSession session = sessions.get(player.getUniqueId());
         if (session == null || session.closed()) return;
         String view = views.getOrDefault(player.getUniqueId(), "lobby");
@@ -930,6 +955,7 @@ public class MineUiControl implements ControlUi {
     @Override
     public void update(ChessMatch match) {
         if (!available()) return;
+        forgetClosedSessions();
         try {
             for (UUID id : sessionsForMatch(match)) {
                 MineUiSession session = sessions.get(id);

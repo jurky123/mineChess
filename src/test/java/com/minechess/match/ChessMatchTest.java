@@ -244,4 +244,43 @@ class ChessMatchTest {
         assertTrue(pgn.contains("[White \"Alice\"]"), pgn);
         assertEquals("e2e4", match.moves().get(0).uci());
     }
+
+    @Test
+    void timeoutWithInsufficientMaterialIsDraw() {
+        // 王对王：任何一方超时都应判和，而不是判对方胜
+        ChessMatch bare = newMatch("8/8/8/4k3/8/8/8/4K3 w - - 0 1");
+        assertNotNull(bare.timeout(Side.WHITE));
+        assertTrue(bare.result().isDraw());
+        assertEquals(Termination.TIMEOUT_INSUFFICIENT, bare.result().termination());
+
+        // 单象也不能将死
+        ChessMatch bishop = newMatch("8/8/8/4k3/8/8/8/2B1K3 w - - 0 1");
+        assertTrue(bishop.timeout(Side.BLACK).isDraw(), "白方只有单象，黑方超时应判和");
+
+        // 有车可以赢，超时照常判胜
+        ChessMatch rook = newMatch("8/8/8/4k3/8/8/8/R3K3 w - - 0 1");
+        assertEquals(Side.WHITE, rook.timeout(Side.BLACK).winner());
+        assertEquals(Termination.TIMEOUT, rook.result().termination());
+
+        // 国王+两个轻子视为仍有可能将死
+        ChessMatch twoKnights = newMatch("8/8/8/4k3/8/8/8/NN2K3 w - - 0 1");
+        assertEquals(Side.WHITE, twoKnights.timeout(Side.BLACK).winner());
+    }
+
+    @Test
+    void pgnUsesStartFenOnlyForCustomPositions() {
+        // 标准开局：不输出 SetUp / FEN 标签
+        ChessMatch standard = newMatch(null);
+        String standardPgn = standard.pgn("Alice", "Bob");
+        assertFalse(standardPgn.contains("[SetUp"), standardPgn);
+        assertFalse(standardPgn.contains("[FEN"), standardPgn);
+
+        // 非标准开局：SetUp=1 + 起始 FEN（不是终局 FEN）
+        String fen = "8/8/8/4k3/8/8/8/4K3 w - - 0 1";
+        ChessMatch custom = newMatch(fen);
+        String customPgn = custom.pgn("Alice", "Bob");
+        assertTrue(customPgn.contains("[SetUp \"1\"]"), customPgn);
+        assertTrue(customPgn.contains("[FEN \"" + fen + "\"]"), customPgn);
+    }
+
 }

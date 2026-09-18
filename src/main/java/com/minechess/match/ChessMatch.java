@@ -37,6 +37,8 @@ public final class ChessMatch {
     private final TimeControl timeControl;
     private final Board board = new Board();
     private final MoveList moveList;
+    /** 非标准开局的起始 FEN（标准开局为 null），PGN 只用它做 SetUp/FEN 标签。 */
+    private final String startFen;
     private final List<MoveRecord> moves = new ArrayList<>();
     private final Map<Side, ChessClock> clocks = new EnumMap<>(Side.class);
 
@@ -62,8 +64,11 @@ public final class ChessMatch {
         this.timeControl = timeControl;
         if (startFen != null && !startFen.isBlank()) {
             board.loadFromFen(startFen);
+            this.startFen = board.getFen();
+        } else {
+            this.startFen = null;
         }
-        this.moveList = startFen == null || startFen.isBlank() ? new MoveList() : new MoveList(startFen);
+        this.moveList = this.startFen == null ? new MoveList() : new MoveList(this.startFen);
         clocks.put(Side.WHITE, ChessClock.system(timeControl.initialMillis(), timeControl.incrementMillis()));
         clocks.put(Side.BLACK, ChessClock.system(timeControl.initialMillis(), timeControl.incrementMillis()));
     }
@@ -348,10 +353,36 @@ public final class ChessMatch {
     }
 
     /** 棋钟超时（flaggedSide 是超时的一方）。 */
+    /** 超时判负；若对手已无子力可能将死（FIDE 规则），则判和棋。 */
     public ChessResult timeout(Side flaggedSide) {
         if (phase != Phase.PLAYING) return null;
-        finish(ChessResult.win(flaggedSide.flip(), Termination.TIMEOUT));
+        Side winner = flaggedSide.flip();
+        finish(canStillMate(winner)
+                ? ChessResult.win(winner, Termination.TIMEOUT)
+                : ChessResult.draw(Termination.TIMEOUT_INSUFFICIENT));
         return result;
+    }
+
+    /**
+     * 该方是否还有可能将死对方：有兵/车/后，或至少两个轻子（象/马）时才认为可以。
+     * 只覆盖明显的子力不足（单王、单轻子），避免把 K vs K、K+B vs K 的超时误判成胜负。
+     */
+    private boolean canStillMate(Side side) {
+        int minors = 0;
+        for (Square square : Square.values()) {
+            if (square == Square.NONE) continue;
+            Piece piece = board.getPiece(square);
+            if (piece == Piece.NONE || piece.getPieceSide() != side) continue;
+            switch (piece.getPieceType()) {
+                case PAWN, ROOK, QUEEN -> {
+                    return true;
+                }
+                case BISHOP, KNIGHT -> minors++;
+                default -> {
+                }
+            }
+        }
+        return minors >= 2;
     }
 
     /** 断线判负。 */
@@ -389,8 +420,10 @@ public final class ChessMatch {
         if (result != null && !result.isDraw()) {
             sb.append("[Termination \"").append(result.termination().name()).append("\"]\n");
         }
-        if (result != null) {
-            sb.append("[FEN \"").append(fen()).append("\"]\n");
+        // FEN 标签表示起始局面：只有非标准开局才输出 SetUp + FEN（标准开局不需要）
+        if (startFen != null) {
+            sb.append("[SetUp \"1\"]\n");
+            sb.append("[FEN \"").append(startFen).append("\"]\n");
         }
         sb.append('\n');
         String[] sans = ChessRules.sanArray(moveList);

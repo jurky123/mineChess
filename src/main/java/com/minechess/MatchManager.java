@@ -73,6 +73,7 @@ public class MatchManager {
         if (ticker != null) ticker.cancel();
         for (ChessMatch match : new ArrayList<>(matches.values())) cleanup(match, false);
         removePreview();
+        tuning.clear();
     }
 
     // ---------- 预览棋盘（管理员调参用，不占用竞技场、不产生交互体） ----------
@@ -559,12 +560,33 @@ public class MatchManager {
         UUID white = room.whitePlayer();
         UUID black = room.blackPlayer();
         List<UUID> watchers = new ArrayList<>(room.spectators());
+        // 先占用竞技场并建好棋盘：失败时房间原样保留，玩家可以重试
+        int slot = plugin.arena().allocate();
+        if (slot < 0) {
+            MineChessPlugin.msg(player, "<red>没有空闲棋盘，请稍后再试或让管理员增加竞技场");
+            return;
+        }
+        ChessMatch match = new ChessMatch(UUID.randomUUID(), white, black, timeControl);
+        ChessTableView table = buildTable(match, slot);
+        if (table == null) {
+            plugin.arena().release(slot);
+            return;
+        }
         playerRoom.remove(host);
         playerRoom.remove(guest);
         rooms.remove(room.id());
         plugin.log("[room] #" + room.number() + " 开始对局（房主执" + (room.hostColor() == Side.WHITE ? "白" : "黑")
                 + (watchers.isEmpty() ? "）" : "，观战 " + watchers.size() + " 人）"));
-        startMatch(new ChessMatch(UUID.randomUUID(), white, black, timeControl), watchers);
+        if (commitMatch(match, table, slot, watchers)) return;
+        // 提交失败：把房间挂回，玩家可以重试
+        rooms.put(room.id(), room);
+        playerRoom.put(host, room.id());
+        if (guest != null) playerRoom.put(guest, room.id());
+        for (UUID id : new UUID[]{host, guest}) {
+            Player member = Bukkit.getPlayer(id);
+            if (member != null) plugin.ui().openRoom(member, room);
+        }
+        MineChessPlugin.msg(player, "<red>开始对局失败，房间已保留，请重试");
     }
 
     /** 房主切换执色（白/黑）。 */
@@ -772,18 +794,50 @@ public class MatchManager {
             send(match, "<red>没有空闲棋盘，请稍后再试或让管理员增加竞技场");
             return;
         }
-        slots.put(match.id(), slot);
-        matches.put(match.id(), match);
-
-        ChessTableView table = new ChessTableView(plugin, match, plugin.arena().center(slot));
-        tables.put(match.id(), table);
-        try {
-            table.build();
-        } catch (RuntimeException e) {
-            plugin.getLogger().log(java.util.logging.Level.SEVERE, "棋盘生成失败", e);
-            cleanup(match, true);
+        ChessTableView table = buildTable(match, slot);
+        if (table == null) {
+            plugin.arena().release(slot);
             return;
         }
+        commitMatch(match, table, slot, spectators);
+    }
+
+    /** 构建棋盘；失败时清掉半成品并返回 null（此时不占用任何对局资源）。 */
+    private ChessTableView buildTable(ChessMatch match, int slot) {
+        ChessTableView table = new ChessTableView(plugin, match, plugin.arena().center(slot));
+        try {
+            table.build();
+            return table;
+        } catch (RuntimeException e) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "棋盘生成失败", e);
+            try {
+                table.remove();
+            } catch (Throwable ignored) {
+            }
+            send(match, "<red>棋盘生成失败，已取消本局");
+            return null;
+        }
+    }
+
+    /** 提交对局：登记资源 → 传送玩家/观战者 → 启动计时；失败整体回收并返回 false。 */
+    private boolean commitMatch(ChessMatch match, ChessTableView table, int slot, List<UUID> spectators) {
+        try {
+            beginMatch(match, table, slot, spectators);
+            return true;
+        } catch (RuntimeException e) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "开始对局失败", e);
+            cleanup(match, true);
+            return false;
+        }
+    }
+
+    /**
+     * 先把资源登记进 maps，任何后续异常都能被 {@link #cleanup} 完整回收。
+     */
+    private void beginMatch(ChessMatch match, ChessTableView table, int slot, List<UUID> spectators) {
+        slots.put(match.id(), slot);
+        matches.put(match.id(), match);
+        tables.put(match.id(), table);
 
         for (Side side : new Side[]{Side.WHITE, Side.BLACK}) {
             UUID id = match.playerOf(side);
@@ -827,8 +881,14 @@ public class MatchManager {
         send(match, "<gold>对局开始！<white>" + plugin.playerName(match.whitePlayer()) + " <gray>执白 vs <white>"
                 + plugin.playerName(match.blackPlayer()) + " <gray>执黑 | <white>" + match.timeControl().describe());
         notifyTurn(match);
-        MineChessPlugin.msg(Bukkit.getPlayer(match.whitePlayer()),
-                "<gray>点击自己的棋子选择，再点绿色提示格落子；<white>/chess resign <gray>认输，<white>/chess draw <gray>提和");
+        // 开局提示只发给在线真人：AI 用虚拟 UUID，Bukkit.getPlayer 会返回 null
+        for (Side side : new Side[]{Side.WHITE, Side.BLACK}) {
+            Player player = Bukkit.getPlayer(match.playerOf(side));
+            if (player != null) {
+                MineChessPlugin.msg(player, "<gray>点击自己的棋子选择，再点绿色提示格落子；"
+                        + "<white>/chess resign <gray>认输，<white>/chess draw <gray>提和");
+            }
+        }
     }
 
     // ---------- 落子 ----------
@@ -1120,6 +1180,9 @@ public class MatchManager {
     // ---------- 断线 ----------
 
     public void quit(Player player) {
+        // 玩家退出：清掉 MineUI 会话与调参状态，避免 closed session / UUID 残留
+        tuning.remove(player.getUniqueId());
+        plugin.ui().close(player);
         // 对局观战者断线：直接离开观战席（人已离线，不传送）
         ChessMatch watched = spectatorMatchOf(player.getUniqueId());
         if (watched != null) {

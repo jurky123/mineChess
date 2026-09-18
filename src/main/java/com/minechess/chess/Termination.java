@@ -12,6 +12,7 @@ public enum Termination {
     DRAW_AGREEMENT("和棋协议"),
     RESIGNATION("认输"),
     TIMEOUT("超时"),
+    TIMEOUT_INSUFFICIENT("超时和棋（对方无法将死）"),
     DISCONNECT_FORFEIT("断线判负");
 
     private final String label;

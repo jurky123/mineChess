@@ -92,6 +92,7 @@ public final class MineChessPlugin extends JavaPlugin {
     }
 
     public static void msg(CommandSender to, String text) {
+        if (to == null) return; // AI / 离线玩家没有实体，静默跳过
         to.sendMessage(mm(text));
     }
 
