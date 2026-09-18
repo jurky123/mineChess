@@ -3,7 +3,19 @@
 set -e
 cd "$(dirname "$0")"
 
-mvn -q -B package
+# 聚合仓库内：跟随相邻 mineUI 的版本并先发布到本地 Maven（独立构建时用 pom 默认版本）
+MINEUI_OPT=""
+MINEUI_PROPS="../mineUI/gradle.properties"
+if [ -f "$MINEUI_PROPS" ]; then
+    MINEUI_VERSION="$(grep -E '^mineui_version=' "$MINEUI_PROPS" | cut -d= -f2 | tr -d '[:space:]')"
+    if [ -n "$MINEUI_VERSION" ]; then
+        echo "==> 发布 MineUI $MINEUI_VERSION 到本地 Maven"
+        (cd ../mineUI && ./gradlew -q :mineui-paper:publishToMavenLocal)
+        MINEUI_OPT="-Dmineui_version=$MINEUI_VERSION"
+    fi
+fi
+
+mvn -q -B $MINEUI_OPT package
 python3 pack/gen_pack.py
 
 mkdir -p out

@@ -11,8 +11,20 @@ if [ ! -d "$SERVER/plugins" ]; then
     exit 1
 fi
 
+# 聚合仓库内：跟随相邻 mineUI 的版本并先发布到本地 Maven（独立构建时用 pom 默认版本）
+MINEUI_OPT=""
+MINEUI_PROPS="$(cd "$ROOT/.." && pwd)/mineUI/gradle.properties"
+if [ -f "$MINEUI_PROPS" ]; then
+    MINEUI_VERSION="$(grep -E '^mineui_version=' "$MINEUI_PROPS" | cut -d= -f2 | tr -d '[:space:]')"
+    if [ -n "$MINEUI_VERSION" ]; then
+        echo "==> 发布 MineUI $MINEUI_VERSION 到本地 Maven"
+        (cd "$ROOT/../mineUI" && ./gradlew -q :mineui-paper:publishToMavenLocal)
+        MINEUI_OPT="-Dmineui_version=$MINEUI_VERSION"
+    fi
+fi
+
 echo "==> 构建 MineChess（含单测与 chesslib 打包）"
-(cd "$ROOT" && mvn -q -B package)
+(cd "$ROOT" && mvn -q -B $MINEUI_OPT package)
 
 echo "==> 生成资源包"
 python3 "$ROOT/pack/gen_pack.py"
