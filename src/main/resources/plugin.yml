@@ -1,0 +1,15 @@
+name: MineChess
+version: '1.0.0'
+main: com.minechess.MineChessPlugin
+api-version: '26.2'
+description: 国际象棋（3D 棋盘 + 完整规则 + 棋钟，资源包由 PackHost 分发）
+author: ubuntu
+softdepend: [MineUI]
+commands:
+  chess:
+    description: MineChess 主命令
+    usage: /chess
+permissions:
+  minechess.admin:
+    description: 允许 /chess setarena 与 /chess reload
+    default: op

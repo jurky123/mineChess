@@ -1,0 +1,548 @@
+{
+  "type": "stack",
+  "width": "100%",
+  "height": "100%",
+  "align": "center",
+  "justify": "center",
+  "children": [
+    {
+      "type": "column",
+      "skin": "vanilla:panel",
+      "width": "94%",
+      "gap": 5,
+      "padding": 8,
+      "align": "stretch",
+      "children": [
+        {
+          "type": "row",
+          "gap": 6,
+          "align": "center",
+          "children": [
+            {
+              "type": "image",
+              "u": 0,
+              "v": 0,
+              "regionWidth": 64,
+              "regionHeight": 64,
+              "textureSize": [
+                64,
+                64
+              ],
+              "texture": "minechess:textures/gui/piece_white_knight.png",
+              "width": 20,
+              "height": 20
+            },
+            {
+              "type": "text",
+              "text": "房间列表",
+              "color": "#FFFFFF",
+              "scale": 1.15
+            },
+            {
+              "type": "image",
+              "u": 0,
+              "v": 0,
+              "regionWidth": 64,
+              "regionHeight": 64,
+              "textureSize": [
+                64,
+                64
+              ],
+              "texture": "minechess:textures/gui/piece_black_knight.png",
+              "width": 20,
+              "height": 20
+            }
+          ]
+        },
+        {
+          "type": "box",
+          "width": "100%",
+          "height": 2,
+          "gradient": [
+            "#00FFD54F",
+            "#FFD54F"
+          ]
+        },
+        {
+          "type": "text",
+          "text": "当前没有等待中的房间，点「返回」创建一桌",
+          "color": "#A0A0A0",
+          "align": "center",
+          "width": "100%",
+          "visible": "{state.noRooms}"
+        },
+        {
+          "type": "scroll",
+          "height": 104,
+          "gap": 4,
+          "children": [
+            {
+              "type": "column",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r0}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join0",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head0",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n0}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g0}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join0",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch0",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r1}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join1",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head1",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n1}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g1}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join1",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch1",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r2}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join2",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head2",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n2}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g2}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join2",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch2",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r3}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join3",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head3",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n3}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g3}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join3",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch3",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r4}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join4",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head4",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n4}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g4}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join4",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch4",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r5}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join5",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head5",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n5}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g5}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join5",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch5",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r6}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join6",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head6",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n6}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g6}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join6",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch6",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 5,
+                  "align": "center",
+                  "visible": "{state.r7}",
+                  "padding": 3,
+                  "radius": 6,
+                  "background": "#221F2937",
+                  "hoverScale": 1.02,
+                  "tooltip": "点击加入房间",
+                  "action": "join7",
+                  "children": [
+                    {
+                      "type": "player",
+                      "id": "head7",
+                      "player": "@self",
+                      "width": 22,
+                      "height": 22,
+                      "scale": 14,
+                      "followMouse": false
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.n7}",
+                      "color": "#FFFFFF",
+                      "width": 170
+                    },
+                    {
+                      "type": "text",
+                      "text": "{state.g7}",
+                      "color": "#A0A0A0",
+                      "width": 90
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "加入",
+                      "action": "join7",
+                      "width": 54,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "观战",
+                      "action": "watch7",
+                      "width": 44,
+                      "height": 18,
+                      "hoverScale": 1.06
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "gap": 6,
+          "justify": "center",
+          "children": [
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "返回",
+              "action": "back_lobby",
+              "width": 92,
+              "height": 18,
+              "hoverScale": 1.06
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "刷新",
+              "action": "refresh_rooms",
+              "width": 92,
+              "height": 18,
+              "hoverScale": 1.06
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "关闭",
+              "action": "close",
+              "width": 92,
+              "height": 18,
+              "hoverScale": 1.06
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

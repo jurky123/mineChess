@@ -1,0 +1,44 @@
+# MineChess 配置
+# 竞技场：站在棋盘正中心（地面高度）用 /chess setarena 现场设置，会记录位置与你的朝向（白方朝向）。
+
+# 棋盘与棋子（方块单位）
+board:
+  size: 0.70        # 每格边长，8 格共 5.6 格
+  height: 0.70      # 棋盘底面相对竞技场中心的高度（棋盘厚 0.35，棋子落在顶面）
+  piece-scale: 0.70 # 棋子模型缩放（16 单位模型 × 0.70 ≈ 0.7 方块高，国王约 0.77）
+  seat-distance: 1.6 # 座位离棋盘中心的水平距离（正上方俯视时调小）
+  spectator-distance: 4.0 # 观战席离棋盘两侧的水平距离
+  spectator-spread: 1.6   # 观战席沿棋盘前后的间距
+  clock-height: 1.30 # 棋钟文字相对棋盘底面的高度（太低会贴着棋盘）
+  select-lift: 0.18  # 选中棋子时抬起的高度（方块）
+
+seat:
+  y-offset: 5.0 # 人物高度（相对竞技场中心；越高越俯视）
+
+game:
+  reconnect-grace: 60   # 断线保留时间（秒）
+  seat-lock-radius: 0.6 # 对局中允许离开座位的距离（方块）
+  interaction-range: 8.0 # 对局中的交互/瞄准距离（方便点到棋盘）
+  promotion-timeout: 30 # 升变选择超时（秒），超时自动升后
+  result-stay: 160      # 对局结束后棋盘保留时间（tick，20 tick = 1 秒）
+  default-time: 10+0    # 默认时限：casual / 3+2 / 5+0 / 10+0 / 15+10
+
+ai:
+  bot: random  # 内置 random，或实现了 com.minechess.ai.ChessBot 的完整类名（可插拔）
+  move-delay: 30 # AI 落子前停顿（tick）
+
+turn:
+  title: true  # 轮到自己时弹标题
+  sound: true  # 轮到自己时播放音效
+
+ui:
+  vanilla-gui: true # 原版箱子面板（/chess 打开）；mod 客户端优先使用 MineUI 面板
+  board-textures: true  # 已修复资源包元数据，启用贴图模式
+
+visual:
+  animations: true
+  particles: true
+  sounds: true
+  use-item-models: true # true=使用 PackHost 材质包；false=原版物品兜底
+  lift: 0.125           # 抵消模型自带的 2/16 抬高（与 MineUNO 一致，一般不用改）
+  model-yaw: 0.0        # 棋盘/棋子模型朝向微调（度），若资源包朝向不对可调 90/180/270

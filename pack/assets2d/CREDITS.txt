@@ -1,0 +1,9 @@
+MineChess 资源包 - 第三方素材声明
+=================================
+
+2D 棋盘棋子贴图（assets/minechess/textures/gui/2d/*.png）
+  作品名: Pixel Chess Pieces
+  作者:   Lucas312
+  来源:   https://opengameart.org/content/pixel-chess-pieces
+  许可:   CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+  说明:   原图为 42x42 像素画，构建时缩放为 32x32 并叠加选中/可吃/将军高亮变体。

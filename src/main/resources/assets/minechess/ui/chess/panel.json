@@ -1,0 +1,386 @@
+{
+  "type": "stack",
+  "width": "100%",
+  "height": "100%",
+  "align": "center",
+  "justify": "center",
+  "children": [
+    {
+      "type": "column",
+      "skin": "vanilla:panel",
+      "width": "90%",
+      "gap": 6,
+      "padding": 10,
+      "align": "stretch",
+      "children": [
+        {
+          "type": "row",
+          "gap": 8,
+          "align": "center",
+          "children": [
+            {
+              "type": "image",
+              "u": 0,
+              "v": 0,
+              "regionWidth": 64,
+              "regionHeight": 64,
+              "textureSize": [
+                64,
+                64
+              ],
+              "texture": "minechess:textures/gui/logo.png",
+              "width": 20,
+              "height": 20
+            },
+            {
+              "type": "text",
+              "text": "MineChess",
+              "color": "#FFFFFF",
+              "scale": 1.1
+            },
+            {
+              "type": "text",
+              "text": "{state.status}",
+              "color": "#A0A0A0"
+            }
+          ]
+        },
+        {
+          "type": "box",
+          "width": "100%",
+          "height": 2,
+          "gradient": [
+            "#00FFD54F",
+            "#FFD54F"
+          ]
+        },
+        {
+          "type": "row",
+          "gap": 8,
+          "justify": "center",
+          "children": [
+            {
+              "type": "column",
+              "gap": 2,
+              "width": "48%",
+              "padding": 6,
+              "radius": 6,
+              "background": "#33FFFFFF",
+              "border": {
+                "color": "#55FFFFFF",
+                "width": 1
+              },
+              "children": [
+                {
+                  "type": "row",
+                  "gap": 4,
+                  "align": "center",
+                  "children": [
+                    {
+                      "type": "item",
+                      "item": "minecraft:white_wool",
+                      "scale": 1.1
+                    },
+                    {
+                      "type": "text",
+                      "text": "白 {state.whiteName}",
+                      "color": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 6,
+                  "align": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "{state.whiteClock}",
+                      "color": "#FFD54F",
+                      "scale": 1.3
+                    },
+                    {
+                      "type": "box",
+                      "width": 6,
+                      "height": 14,
+                      "radius": 2,
+                      "visible": "{state.whiteTurn}",
+                      "cycle": {
+                        "interval": 0.6,
+                        "colors": [
+                          "#FFD54F",
+                          "#FFF3C4"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "column",
+              "gap": 2,
+              "width": "48%",
+              "padding": 6,
+              "radius": 6,
+              "background": "#331F2937",
+              "border": {
+                "color": "#55FFFFFF",
+                "width": 1
+              },
+              "children": [
+                {
+                  "type": "row",
+                  "gap": 4,
+                  "align": "center",
+                  "children": [
+                    {
+                      "type": "item",
+                      "item": "minecraft:black_wool",
+                      "scale": 1.1
+                    },
+                    {
+                      "type": "text",
+                      "text": "黑 {state.blackName}",
+                      "color": "#FFFFFF"
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 6,
+                  "align": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "text": "{state.blackClock}",
+                      "color": "#FFD54F",
+                      "scale": 1.3
+                    },
+                    {
+                      "type": "box",
+                      "width": 6,
+                      "height": 14,
+                      "radius": 2,
+                      "visible": "{state.blackTurn}",
+                      "cycle": {
+                        "interval": 0.6,
+                        "colors": [
+                          "#FFD54F",
+                          "#FFF3C4"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "scroll",
+          "height": 56,
+          "padding": 4,
+          "radius": 4,
+          "background": "#22000000",
+          "children": [
+            {
+              "type": "text",
+              "text": "{state.history}",
+              "color": "#E0E0E0"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "gap": 6,
+          "align": "center",
+          "justify": "center",
+          "visible": "{state.incomingDraw}",
+          "children": [
+            {
+              "type": "text",
+              "text": "对方提议和棋",
+              "color": "#FFD54F"
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "接受",
+              "action": "acceptdraw",
+              "width": 70,
+              "height": 18,
+              "hoverScale": 1.08
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "拒绝",
+              "action": "declinedraw",
+              "width": 70,
+              "height": 18,
+              "hoverScale": 1.08
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "gap": 6,
+          "justify": "center",
+          "visible": "{state.canAct}",
+          "children": [
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "和棋",
+              "action": "draw",
+              "width": 88,
+              "height": 18,
+              "hoverScale": 1.06,
+              "tooltip": "向对手提议和棋"
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "认输",
+              "action": "resign",
+              "width": 82,
+              "height": 18,
+              "hoverScale": 1.06
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "离开",
+              "action": "leave_match",
+              "width": 82,
+              "height": 18,
+              "hoverScale": 1.06
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "visible": "{state.isSpectator}",
+          "justify": "center",
+          "gap": 6,
+          "children": [
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "退出观战",
+              "action": "leave_spectate",
+              "width": 110,
+              "height": 18,
+              "hoverScale": 1.06
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "gap": 6,
+          "justify": "center",
+          "children": [
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "2D 棋盘",
+              "action": "open_board",
+              "width": 110,
+              "height": 18,
+              "hoverScale": 1.06,
+              "tooltip": "固定视角，用鼠标点格子走棋"
+            },
+            {
+              "type": "button",
+              "skin": "vanilla:button",
+              "text": "关闭",
+              "action": "close",
+              "width": 90,
+              "height": 18,
+              "hoverScale": 1.06
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "stack",
+      "id": "confirm",
+      "z": 10,
+      "modal": true,
+      "visible": "{state.showConfirm}",
+      "width": "100%",
+      "height": "100%",
+      "children": [
+        {
+          "type": "box",
+          "width": "100%",
+          "height": "100%",
+          "background": "#99000000"
+        },
+        {
+          "type": "stack",
+          "width": "100%",
+          "height": "100%",
+          "align": "center",
+          "justify": "center",
+          "children": [
+            {
+              "type": "column",
+              "skin": "vanilla:dialog",
+              "width": 240,
+              "gap": 8,
+              "align": "stretch",
+              "children": [
+                {
+                  "type": "row",
+                  "gap": 6,
+                  "align": "center",
+                  "justify": "center",
+                  "children": [
+                    {
+                      "type": "item",
+                      "item": "minecraft:white_banner",
+                      "scale": 1.2
+                    },
+                    {
+                      "type": "text",
+                      "text": "确认认输？",
+                      "color": "#FF8A80"
+                    }
+                  ]
+                },
+                {
+                  "type": "row",
+                  "gap": 8,
+                  "justify": "center",
+                  "children": [
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "确认",
+                      "action": "resign_confirm",
+                      "width": 92,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    },
+                    {
+                      "type": "button",
+                      "skin": "vanilla:button",
+                      "text": "取消",
+                      "action": "resign_cancel",
+                      "width": 92,
+                      "height": 18,
+                      "hoverScale": 1.08
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

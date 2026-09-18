@@ -1,0 +1,125 @@
+{
+  "type": "stack",
+  "width": "100%",
+  "height": "100%",
+  "align": "center",
+  "justify": "center",
+  "children": [
+    {
+      "type": "column",
+      "skin": "vanilla:panel",
+      "width": "90%",
+      "gap": 5,
+      "padding": 8,
+      "align": "stretch",
+      "children": [
+        {
+          "type": "row",
+          "gap": 6,
+          "align": "center",
+          "children": [
+            { "type": "item", "item": "minecraft:writable_book", "scale": 1.2 },
+            { "type": "text", "text": "邀请玩家加入房间", "color": "#FFFFFF", "scale": 1.15 }
+          ]
+        },
+        { "type": "box", "width": "100%", "height": 2, "gradient": ["#00FFD54F", "#FFD54F"] },
+        { "type": "text", "text": "暂无可邀请的在线玩家（对方可能在房间或对局中）", "color": "#A0A0A0", "align": "center", "width": "100%", "visible": "{state.none}" },
+        {
+          "type": "scroll",
+          "height": 110,
+          "gap": 4,
+          "children": [
+            {
+              "type": "column",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v0}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head0", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p0}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite0", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v1}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head1", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p1}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite1", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v2}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head2", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p2}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite2", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v3}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head3", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p3}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite3", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v4}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head4", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p4}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite4", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v5}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head5", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p5}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite5", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v6}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head6", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p6}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite6", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                },
+                {
+                  "type": "row", "gap": 6, "align": "center", "visible": "{state.v7}",
+                  "padding": 3, "radius": 6, "background": "#221F2937",
+                  "children": [
+                    { "type": "player", "id": "head7", "player": "@self", "width": 22, "height": 22, "scale": 14, "followMouse": false },
+                    { "type": "text", "text": "{state.p7}", "color": "#FFFFFF", "width": 200 },
+                    { "type": "button", "skin": "vanilla:button", "text": "邀请", "action": "invite7", "width": 60, "height": 18, "hoverScale": 1.08 }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "gap": 6,
+          "justify": "center",
+          "children": [
+            { "type": "button", "skin": "vanilla:button", "text": "返回房间", "action": "back_room", "width": 100, "height": 18, "hoverScale": 1.06 },
+            { "type": "button", "skin": "vanilla:button", "text": "刷新", "action": "refresh_invite", "width": 90, "height": 18, "hoverScale": 1.06 },
+            { "type": "button", "skin": "vanilla:button", "text": "关闭", "action": "close", "width": 90, "height": 18, "hoverScale": 1.06 }
+          ]
+        }
+      ]
+    }
+  ]
+}
