@@ -362,9 +362,17 @@ public class MineUiControl implements ControlUi {
 
     private void registerPanel(MineUiSession session) {
         Player player = session.player();
-        session.on("resign", action -> session.state("showConfirm", true));
-        session.on("resign_cancel", action -> session.state("showConfirm", false));
+        session.on("resign", action -> {
+            plugin.log("[ui] " + player.getName() + " 点击认输（等待确认）");
+            session.state("showConfirm", true);
+            player.sendActionBar(MineChessPlugin.mm("<gray>点弹窗【确认】才会认输；卡住可用 <white>/chess resign"));
+        });
+        session.on("resign_cancel", action -> {
+            plugin.log("[ui] " + player.getName() + " 取消认输");
+            session.state("showConfirm", false);
+        });
         session.on("resign_confirm", action -> {
+            plugin.log("[ui] " + player.getName() + " 确认认输");
             session.state("showConfirm", false);
             plugin.matches().resign(player);
         });
