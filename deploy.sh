@@ -31,7 +31,8 @@ python3 "$ROOT/pack/gen_pack.py"
 
 echo "==> 部署到 $SERVER"
 rm -f "$SERVER/plugins/"MineChess-*.jar
-cp "$ROOT"/target/MineChess-*.jar "$SERVER/plugins/"
+VERSION=$(awk -F'[<>]' '/^  <version>/{print $3; exit}' "$ROOT/pom.xml")
+cp "$ROOT/target/MineChess-$VERSION.jar" "$SERVER/plugins/"
 
 mkdir -p "$SERVER/plugins/PackHost/packs"
 cp "$ROOT/pack/out/minechess.zip" "$SERVER/plugins/PackHost/packs/"

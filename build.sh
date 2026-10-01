@@ -19,7 +19,8 @@ mvn -q -B $MINEUI_OPT package
 python3 pack/gen_pack.py
 
 mkdir -p out
-cp target/MineChess-*.jar out/
+VERSION=$(awk -F'[<>]' '/^  <version>/{print $3; exit}' pom.xml)
+cp "target/MineChess-$VERSION.jar" out/
 cp pack/out/minechess.zip out/
 
 echo "构建完成，产物："

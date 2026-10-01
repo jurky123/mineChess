@@ -1,5 +1,5 @@
 name: MineChess
-version: '1.0.0'
+version: '1.0.1'
 main: com.minechess.MineChessPlugin
 api-version: '26.2'
 description: 国际象棋（3D 棋盘 + 完整规则 + 棋钟，资源包由 PackHost 分发）

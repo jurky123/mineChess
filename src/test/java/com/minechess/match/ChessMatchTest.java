@@ -17,6 +17,7 @@ import com.minechess.chess.MoveOutcome;
 import com.minechess.chess.Termination;
 import com.minechess.chess.TimeControl;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 
 class ChessMatchTest {
@@ -36,6 +37,62 @@ class ChessMatchTest {
         assertNotNull(move, "无法解析着法 " + uci);
         PieceType promotion = move.getPromotion() == Piece.NONE ? null : move.getPromotion().getPieceType();
         return match.play(player, move.getFrom(), move.getTo(), promotion);
+    }
+
+    @Test
+    void expiredMoveCannotRestoreIncrementOrChangeBoard() {
+        AtomicLong now = new AtomicLong();
+        ChessMatch match = new ChessMatch(UUID.randomUUID(), WHITE, BLACK,
+                new TimeControl("test", 1000, 2000), null, now::get);
+        match.start();
+        String before = match.fen();
+        now.set(1_000_000_000L);
+        MoveOutcome outcome = play(match, WHITE, "e2e4");
+        assertEquals(MoveOutcome.Status.TIMEOUT, outcome.status());
+        assertEquals(Termination.TIMEOUT, outcome.result().termination());
+        assertEquals(Side.BLACK, outcome.result().winner());
+        assertEquals(before, match.fen());
+        assertEquals(0, match.ply());
+        assertEquals(0, match.clock(Side.WHITE).remainingMillis());
+        assertFalse(match.clock(Side.BLACK).running());
+    }
+
+    @Test
+    void pendingPromotionExpiresBeforeManualOrAutomaticChoice() {
+        for (PieceType type : new PieceType[]{PieceType.QUEEN, PieceType.KNIGHT}) {
+            AtomicLong now = new AtomicLong();
+            ChessMatch match = new ChessMatch(UUID.randomUUID(), WHITE, BLACK,
+                    new TimeControl("test", 1000, 2000),
+                    "7k/P6r/8/8/8/8/8/4K3 w - - 0 1", now::get);
+            match.start();
+            assertEquals(MoveOutcome.Status.NEEDS_PROMOTION,
+                    match.play(WHITE, Square.A7, Square.A8, null).status());
+            now.set(1_000_000_000L);
+            MoveOutcome outcome = match.promote(WHITE, type);
+            assertEquals(MoveOutcome.Status.TIMEOUT, outcome.status());
+            assertEquals(Piece.WHITE_PAWN, match.pieceAt(Square.A7));
+            assertEquals(Piece.NONE, match.pieceAt(Square.A8));
+            assertFalse(match.promotionPending());
+            assertEquals(Side.BLACK, outcome.result().winner());
+        }
+    }
+
+    @Test
+    void legalMoveBeforeExpiryAndExemptBotStillWork() {
+        AtomicLong now = new AtomicLong();
+        ChessMatch match = new ChessMatch(UUID.randomUUID(), WHITE, BLACK,
+                new TimeControl("test", 1000, 2000), null, now::get);
+        match.exemptClock(Side.BLACK);
+        match.start();
+        now.set(999_000_000L);
+        assertTrue(play(match, WHITE, "e2e4").ok());
+        assertEquals(2001, match.clock(Side.WHITE).remainingMillis());
+        now.addAndGet(2_000_000_000L);
+        assertTrue(match.clock(Side.BLACK).flagged());
+        assertTrue(play(match, BLACK, "e7e5").ok());
+        assertEquals(ChessMatch.Phase.PLAYING, match.phase());
+        now.addAndGet(2_001_000_000L);
+        assertEquals(MoveOutcome.Status.TIMEOUT, play(match, WHITE, "g1f3").status());
     }
 
     @Test

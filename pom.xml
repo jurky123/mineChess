@@ -6,7 +6,7 @@
 
   <groupId>com.minechess</groupId>
   <artifactId>minechess</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -14,7 +14,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- 独立构建时的默认版本（需先 publishToMavenLocal）；
          build.sh/deploy.sh 在聚合仓库内会读取相邻 mineUI 的版本并自动覆盖 -->
-    <mineui_version>0.11.0</mineui_version>
+    <mineui_version>0.16.1</mineui_version>
   </properties>
 
   <repositories>

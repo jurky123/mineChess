@@ -6,6 +6,7 @@ public record MoveOutcome(Status status, MoveRecord move, ChessResult result) {
     public enum Status {
         OK,
         NEEDS_PROMOTION,
+        TIMEOUT,
         NOT_PLAYING,
         NOT_YOUR_TURN,
         NO_PIECE,

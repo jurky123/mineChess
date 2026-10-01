@@ -841,6 +841,7 @@ public class MatchManager {
 
         for (Side side : new Side[]{Side.WHITE, Side.BLACK}) {
             UUID id = match.playerOf(side);
+            if (bots.isBot(id)) match.exemptClock(side);
             Player player = Bukkit.getPlayer(id);
             playerMatch.put(id, match.id());
             if (player == null) continue;
@@ -948,6 +949,10 @@ public class MatchManager {
                 if (outcome.result() != null) finish(match, outcome.result());
                 else notifyTurn(match);
             }
+            case TIMEOUT -> {
+                send(match, "<red>" + player.getName() + " 超时判负");
+                finish(match, outcome.result());
+            }
             case NEEDS_PROMOTION -> {
                 selected.remove(id);
                 table.clearSelection();
@@ -1007,6 +1012,8 @@ public class MatchManager {
             table.applyMove(outcome.move());
             plugin.ui().update(match);
             if (outcome.result() != null) finish(match, outcome.result());
+        } else if (outcome.finished()) {
+            finish(match, outcome.result());
         } else {
             MineChessPlugin.msg(player, "<red>升变失败：" + outcome.status());
         }
@@ -1257,7 +1264,7 @@ public class MatchManager {
                 if (table != null) table.hidePromotion();
                 if (side != null) {
                     MoveOutcome outcome = match.promote(match.playerOf(side), PieceType.QUEEN);
-                    send(match, "<gray>升变超时，自动升后");
+                    if (outcome.ok()) send(match, "<gray>升变超时，自动升后");
                     if (table != null && outcome.ok()) table.applyMove(outcome.move());
                     if (outcome.result() != null) finish(match, outcome.result());
                 }

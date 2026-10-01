@@ -18,11 +18,13 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.LongSupplier;
 
 /**
  * 一场国际象棋对局。纯 Java：不引用任何 Bukkit / 展示层代码，可在单测里直接驱动。
@@ -42,6 +44,8 @@ public final class ChessMatch {
     private final List<MoveRecord> moves = new ArrayList<>();
     private final Map<Side, ChessClock> clocks = new EnumMap<>(Side.class);
 
+    private final Set<Side> clockExempt = EnumSet.noneOf(Side.class);
+
     private Phase phase = Phase.PLAYING;
     private ChessResult result;
     private Side drawOffer;
@@ -58,6 +62,11 @@ public final class ChessMatch {
      * @param startFen 自定义起始局面（null 为标准开局），棋谱与 SAN 都从这个局面开始
      */
     public ChessMatch(UUID id, UUID whitePlayer, UUID blackPlayer, TimeControl timeControl, String startFen) {
+        this(id, whitePlayer, blackPlayer, timeControl, startFen, System::nanoTime);
+    }
+
+    ChessMatch(UUID id, UUID whitePlayer, UUID blackPlayer, TimeControl timeControl, String startFen,
+               LongSupplier nanoTime) {
         this.id = id;
         this.whitePlayer = whitePlayer;
         this.blackPlayer = blackPlayer;
@@ -69,14 +78,26 @@ public final class ChessMatch {
             this.startFen = null;
         }
         this.moveList = this.startFen == null ? new MoveList() : new MoveList(this.startFen);
-        clocks.put(Side.WHITE, ChessClock.system(timeControl.initialMillis(), timeControl.incrementMillis()));
-        clocks.put(Side.BLACK, ChessClock.system(timeControl.initialMillis(), timeControl.incrementMillis()));
+        clocks.put(Side.WHITE, new ChessClock(timeControl.initialMillis(), timeControl.incrementMillis(), nanoTime));
+        clocks.put(Side.BLACK, new ChessClock(timeControl.initialMillis(), timeControl.incrementMillis(), nanoTime));
     }
 
     /** 对局开始，轮到走棋的一方开始计时。 */
     public void start() {
         startedAtMillis = System.currentTimeMillis();
         clocks.get(board.getSideToMove()).start();
+    }
+
+    /** AI 保留现有不判超时策略；玩家始终受棋钟限制。 */
+    public void exemptClock(Side side) {
+        clockExempt.add(side);
+    }
+
+    private MoveOutcome expiredOutcome(Side side) {
+        if (!clockExempt.contains(side) && clocks.get(side).flagged()) {
+            return new MoveOutcome(MoveOutcome.Status.TIMEOUT, null, timeout(side));
+        }
+        return null;
     }
 
     // ---------- 查询 ----------
@@ -174,6 +195,8 @@ public final class ChessMatch {
         Side side = sideOf(player);
         if (side == null) return MoveOutcome.fail(MoveOutcome.Status.NOT_PLAYING);
         if (side != board.getSideToMove()) return MoveOutcome.fail(MoveOutcome.Status.NOT_YOUR_TURN);
+        MoveOutcome expired = expiredOutcome(side);
+        if (expired != null) return expired;
         Piece piece = board.getPiece(from);
         if (piece == Piece.NONE) return MoveOutcome.fail(MoveOutcome.Status.NO_PIECE);
         if (piece.getPieceSide() != side) return MoveOutcome.fail(MoveOutcome.Status.OPPONENT_PIECE);
@@ -197,6 +220,8 @@ public final class ChessMatch {
         if (pendingPromotion == null || pendingPromotion != sideOf(player)) {
             return MoveOutcome.fail(MoveOutcome.Status.ILLEGAL);
         }
+        MoveOutcome expired = expiredOutcome(pendingPromotion);
+        if (expired != null) return expired;
         Square from = pendingFrom;
         Square to = pendingTo;
         clearPendingPromotion();
@@ -233,6 +258,8 @@ public final class ChessMatch {
 
     private MoveOutcome apply(Move move) {
         Side mover = board.getSideToMove();
+        MoveOutcome expired = expiredOutcome(mover);
+        if (expired != null) return expired;
         Piece moving = board.getPiece(move.getFrom());
         Square capturedSquare = ChessRules.capturedSquare(board, move);
         Piece captured = capturedSquare == null ? Piece.NONE : board.getPiece(capturedSquare);
