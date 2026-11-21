@@ -187,7 +187,9 @@
             {
               "type": "text",
               "text": "{state.history}",
-              "color": "#E0E0E0"
+              "color": "#E0E0E0",
+              "width": "100%",
+              "wrap": true
             }
           ]
         },
@@ -352,6 +354,14 @@
                   ]
                 },
                 {
+                  "type": "text",
+                  "text": "认输将立即判负并结束对局",
+                  "color": "#A0A0A0",
+                  "scale": 0.85,
+                  "width": "100%",
+                  "align": "center"
+                },
+                {
                   "type": "row",
                   "gap": 8,
                   "justify": "center",
@@ -360,6 +370,7 @@
                       "type": "button",
                       "skin": "vanilla:button",
                       "text": "确认",
+                      "color": "#FF8A80",
                       "action": "resign_confirm",
                       "width": 92,
                       "height": 18,
